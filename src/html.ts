@@ -1,4 +1,4 @@
-export const worldMapHTML = (mapList, view) => {
+export const worldMapHTML = (mapList, view, hiddenMe = false) => {
     // 为了使原点居中 必须为基数
     if (view % 2 == 0) {
         view += 1;
@@ -19,6 +19,16 @@ export const worldMapHTML = (mapList, view) => {
               padding: 0;
           }
   
+          body,html {
+          font-family: '微软雅黑', sans-serif;
+          width:800px;
+          min-height:400px;
+          margin: 0;
+          padding: 20px;
+          text-align: center;
+          background-color:transparent ; /* 便签背景色 */
+          }
+
           .content {
               display: grid;
               grid-template-columns: repeat(${view}, 1fr);
@@ -58,42 +68,42 @@ export const worldMapHTML = (mapList, view) => {
           .content .item.woods{
               background:url(https://smmcat.cn/run/openworld/mapItem.png) no-repeat;
               background-size: 900%;
-              background-position: -${share}px 0px;
+              background-position: -${share - 1}px 0px;
           }
           .content .item.brook{
               background:url(https://smmcat.cn/run/openworld/mapItem.png) no-repeat;
               background-size: 900%;
-              background-position: -${share * 2}px 0px;
+              background-position: -${share * 2 - 2}px 0px;
           }
           .content .item.yamakawa{
               background:url(https://smmcat.cn/run/openworld/mapItem.png) no-repeat;
               background-size: 900%;
-              background-position: -${share * 3}px 0px;
+              background-position: -${share * 3 - 3}px 0px;
           }
           .content .item.diggings{
               background:url(https://smmcat.cn/run/openworld/mapItem.png) no-repeat;
               background-size: 900%;
-              background-position: -${share * 4}px 0px;
+              background-position: -${share * 4 - 4}px 0px;
           }
           .content .item.plain{
               background:url(https://smmcat.cn/run/openworld/mapItem.png) no-repeat;
               background-size: 900%;
-              background-position: -${share * 5}px 0px;
+              background-position: -${share * 5 - 5}px 0px;
           }
           .content .item.city{
               background:url(https://smmcat.cn/run/openworld/mapItem.png) no-repeat;
               background-size: 900%;
-              background-position: -${share * 6}px 0px;
+              background-position: -${share * 6 - 6}px 0px;
           }
           .content .item.tribe{
               background:url(https://smmcat.cn/run/openworld/mapItem.png) no-repeat;
               background-size: 900%;
-              background-position: -${share * 7}px 0px;
+              background-position: -${share * 7 - 7}px 0px;
           }
           .content .item.pit{
               background:url(https://smmcat.cn/run/openworld/mapItem.png) no-repeat;
               background-size: 900%;
-              background-position: -${share * 8}px 0px;
+              background-position: -${share * 8 - 8}px 0px;
           }
           .content .item.other::before{
               position: absolute;
@@ -114,7 +124,7 @@ export const worldMapHTML = (mapList, view) => {
       <div class="content">
           ${mapList.map((item, index) => {
         return item.map((m, i) => {
-            return `<div class="item ${dict[m] ? dict[m] : ''} ${i == Math.floor(view / 2) && index == Math.floor(view / 2) ? 'my' : ''}  ${m == '*' && !(Math.floor(view / 2) && index == Math.floor(view / 2)) ? 'other' : ''}"></div>`;
+            return `<div class="item ${dict[m] ? dict[m] : ''} ${i == Math.floor(view / 2) && index == Math.floor(view / 2) && !hiddenMe ? 'my' : ''}  ${m == '*' && !(Math.floor(view / 2) && index == Math.floor(view / 2)) ? 'other' : ''}"></div>`;
         }).join('');
     }).join('')}
       </div>

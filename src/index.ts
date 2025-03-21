@@ -25,7 +25,7 @@ export const Config: Schema<Config> = Schema.object({
 })
 
 export function apply(ctx: Context, config: Config) {
-  
+
   async function getStoreWordMap() {
     const result = await getOrCreateFile(path.join(ctx.baseDir, config.historyData), true);
     return JSON.parse(result);
@@ -189,7 +189,6 @@ export function apply(ctx: Context, config: Config) {
       "右": word.move.right
     };
     const loca = userInfo[session.userId].poi;
-    console.log(word.mapVisualization());
     let type = false;
     word.userMove(userInfo[session.userId].name, moveTo[direction](loca, (t) => {
       type = t;
@@ -211,6 +210,34 @@ export function apply(ctx: Context, config: Config) {
       }
     }
   });
+  ctx
+    .command('异世界 位置')
+    .action(async ({ session }) => {
+      if (!userInfo[session.userId]) {
+        await session.send(`你还没创建角色。请先 /异世界 注册 xxx`);
+        return;
+      }
+      const temp = getUserQueryTemp(session.userId);
+      if (temp.isUse) {
+        await session.send("请等待上一个操作的结束");
+        return;
+      }
+      temp.startUse();
+      if (!config.imaging) {
+        await session.send(word.mapVisualization(userInfo[session.userId].name, 9) + "\n");
+        temp.clearUse();
+      } else {
+        try {
+          const msg = word.useHtmlmapVisualization(userInfo[session.userId].name, 9);
+          const imgUrl = await ctx.puppeteer.render(msg.html);
+          await session.send(imgUrl + msg.msg);
+          temp.clearUse();
+        } catch (error) {
+          console.log(error);
+          temp.clearUse();
+        }
+      }
+    })
   ctx.command("异世界.玩家 <username>").action(async ({ session }, username) => {
     if (!word.userLive[username]) {
       await session.send("没有该玩家。");
@@ -231,6 +258,31 @@ export function apply(ctx: Context, config: Config) {
     const msg = word.regionalPlayer(userLocation);
     await session.send(`当前区域 (${addressAxios[0]},${addressAxios[1]}) 存在的玩家为：` + msg);
   });
+
+  ctx
+    .command('异世界.世界地图')
+    .action(async ({ session }) => {
+      if (!userInfo[session.userId]) {
+        await session.send(`你还没创建角色。请先 /异世界 注册 xxx`);
+        return;
+      }
+      const temp = getUserQueryTemp(session.userId);
+      if (temp.isUse) {
+        await session.send("请等待上一个操作的结束");
+        return;
+      }
+      temp.startUse();
+      try {
+        const msg = word.useHtmlmapVisualization('', 50, true);
+        const imgUrl = await ctx.puppeteer.render(msg.html);
+        await session.send(imgUrl + msg.msg);
+        temp.clearUse();
+      } catch (error) {
+        console.log(error);
+        temp.clearUse();
+      }
+    })
+
   const userWebTemp = {};
   function getUserQueryTemp(userId) {
     if (!userWebTemp[userId]) {

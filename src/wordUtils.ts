@@ -98,6 +98,10 @@ export class WorldMap {
      * 用户发起地图查看
     */
     userMapInfo(userName: string, view: number = 5): { poi: (number | string)[][]; roundUserPoi: RoundUserInfo } {
+        // 溢出修正
+        if (view > this.size) {
+            view = this.size
+        }
         if (view % 2 === 0) view += 1;
 
         const sliceArray = (arr: number[], startIndex: number, endIndex: number): (number | string)[] => {
@@ -112,7 +116,7 @@ export class WorldMap {
             return result;
         };
 
-        const getCoord = this.userLive[userName];
+        const getCoord = this.userLive[userName] || this.middion;
         let poi: (number | string)[][] = [];
         const size = this.size;
         const boundary = Array.from({ length: size }, () => '×');
@@ -133,34 +137,33 @@ export class WorldMap {
         let roundUserInfo: RoundUserInfo = {};
         Object.keys(this.userLive).forEach((item) => {
             if (item !== userName && Math.abs(getCoord[0] - this.userLive[item][0]) <= Math.floor(view / 2) && Math.abs(getCoord[1] - this.userLive[item][1]) <= Math.floor(view / 2)) {
-                const position = this.relativeLocation(userName, item).coord;
+                const position = this.relativeLocation(userName, item, true).coord;
                 const middionPoi: [number, number] = [Math.floor(view / 2), Math.floor(view / 2)];
                 roundUserInfo[item] = [middionPoi[0] + position[0], middionPoi[1] + position[1]];
             }
         });
-
         return { poi, roundUserPoi: roundUserInfo };
     }
 
-    useHtmlmapVisualization(userName: string = 'all', view: number = 5): { html: string; msg: string } {
+    /**
+     * 地图可视化 - 图形化
+     */
+    useHtmlmapVisualization(userName: string, view: number = 5, hiddenMe = false): { html: string; msg: string } {
         let roundInfo = this.userMapInfo(userName, view);
         const roundUser = roundInfo.roundUserPoi;
         Object.keys(roundUser).forEach((roundHuman) => {
             roundInfo.poi[roundUser[roundHuman][1]][roundUser[roundHuman][0]] = '*';
         });
         return {
-            html: worldMapHTML(roundInfo.poi, view),
-            msg: `\n\n当前区域为：${this.dictMap[this.userMapInfo(userName, view).poi[Math.floor(view / 2)][Math.floor(view / 2)]]}` +
-                `${Object.keys(roundUser).length ? `\n附近其他玩家：${Object.keys(roundUser).join('、')}` : ''}`,
+            html: worldMapHTML(roundInfo.poi, view, hiddenMe),
+            msg: userName ? `\n\n当前区域为：${this.dictMap[this.userMapInfo(userName, view).poi[Math.floor(view / 2)][Math.floor(view / 2)]]}` +
+                `${Object.keys(roundUser).length ? `\n附近其他玩家：${Object.keys(roundUser).length > 10 ? Object.keys(roundUser).slice(0, 20).filter(item => item).join('、') + `...等${Object.keys(roundUser).length}位玩家` : Object.keys(roundUser).join('、')}` : ''}` : `地图共有${Object.keys(roundUser).length}位玩家`,
         };
     }
     /**
       * 地图可视化
       * */
-    mapVisualization(userName: string = 'all', view: number = 5): string {
-        if (userName === 'all') {
-            return this.map.map(item => item.map(i => i).join(' ')).join('\n');
-        }
+    mapVisualization(userName: string, view: number = 5): string {
         let roundInfo = this.userMapInfo(userName, view);
         const roundUser = roundInfo.roundUserPoi;
         Object.keys(roundUser).forEach((roundHuman) => {
@@ -175,16 +178,16 @@ export class WorldMap {
                 return '🌫️';
             }).join('')).join('\n') +
             `\n\n当前区域为：${this.dictMap[this.userMapInfo(userName, view).poi[Math.floor(view / 2)][Math.floor(view / 2)]]}` +
-            `${Object.keys(roundUser).length ? `\n附近其他玩家：${Object.keys(roundUser).join('、')}` : ''}`;
+            `${Object.keys(roundUser).length ? `\n附近其他玩家：${Object.keys(roundUser).length > 10 ? Object.keys(roundUser).slice(0, 20).filter(item => item).join('、') + `...等${Object.keys(roundUser).length}位玩家` : Object.keys(roundUser).join('、')}` : ''}`;
     }
     /**
       *获取 目标玩家距离和位置
     */
-    relativeLocation(userName: string, targetName: string): { msg: string; coord: [number, number] } {
-        if (!this.userLive[targetName]) {
+    relativeLocation(userName: string, targetName: string, useMap = false): { msg: string; coord: [number, number] } {
+        if (!this.userLive[targetName] && !useMap) {
             return { msg: '目标不存在', coord: [0, 0] };
         }
-        const myLocation = this.userLive[userName];
+        const myLocation = this.userLive[userName] || this.middion;
         const targetLoaction = this.userLive[targetName];
         const coordResult: [number, number] = [targetLoaction[0] - myLocation[0], targetLoaction[1] - myLocation[1]];
         const direction = [coordResult[0] > 0 ? '右' : '左', coordResult[1] > 0 ? '下' : '上'];
